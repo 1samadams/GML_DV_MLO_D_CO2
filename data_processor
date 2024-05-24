@@ -1,0 +1,18 @@
+# optional if you just want a dataframe
+
+import pandas as pd
+
+# Replace 'path_to_file' with the actual file path of the downloaded data
+file_path = 'path_to_file/co2_mlo_surface-insitu_1_ccgg_DailyData.txt'
+
+# Reading the data while skipping initial rows that are metadata
+data = pd.read_csv(file_path, delim_whitespace=True, comment='#', header=None, skiprows=156)
+
+# Displaying the first few rows of the dataset to understand its structure
+print(data.head())
+
+# Assuming the columns are not named, add appropriate column names
+data.columns = ['Year', 'Month', 'Day', 'Hour', 'Minute', 'Second', 'Value', 'Uncertainty', 'N', 'Latitude', 'Longitude', 'Altitude', 'Intake_Height', 'QC_Flag']
+
+# Display the dataframe with the new column names
+print(data.head())
