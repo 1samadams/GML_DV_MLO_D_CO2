@@ -1,0 +1,87 @@
+# Libraries
+# pip install pandas matplotlib 
+# Uses tkinter
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from tkinter import Tk, Label, Button, Radiobutton, IntVar, filedialog, messagebox
+
+def load_data(file_path):
+    data = pd.read_csv(file_path, delim_whitespace=True, comment='#', header=None, skiprows=159)
+    data.columns = ['Site_Code', 'Year', 'Month', 'Day', 'Hour', 'Minute', 'Second', 'Datetime', 'Time_Decimal', 'Midpoint_Time',
+                    'Value', 'Value_Std_Dev', 'Nvalue', 'Latitude', 'Longitude', 'Altitude', 'Elevation', 'Intake_Height', 'QC_Flag']
+    return data
+
+def plot_data(data, period, file_type=None, file_path=None):
+    if period == 'daily':
+        plt.figure(figsize=(12, 6))
+        plt.plot(data['Datetime'], data['Value'], marker='o', linestyle='-', markersize=2)
+        plt.title('Daily CO2 Concentration')
+        plt.xlabel('Date')
+        plt.ylabel('CO2 Concentration (ppm)')
+    elif period == 'monthly':
+        data['Year-Month'] = data['Year'].astype(str) + '-' + data['Month'].astype(str).str.zfill(2)
+        monthly_data = data.groupby('Year-Month')['Value'].mean().reset_index()
+        plt.figure(figsize=(12, 6))
+        plt.plot(monthly_data['Year-Month'], monthly_data['Value'], marker='o', linestyle='-', markersize=2)
+        plt.title('Monthly CO2 Concentration')
+        plt.xlabel('Year-Month')
+        plt.ylabel('CO2 Concentration (ppm)')
+    elif period == 'annual':
+        annual_data = data.groupby('Year')['Value'].mean().reset_index()
+        plt.figure(figsize=(12, 6))
+        plt.plot(annual_data['Year'], annual_data['Value'], marker='o', linestyle='-', markersize=2)
+        plt.title('Annual CO2 Concentration')
+        plt.xlabel('Year')
+        plt.ylabel('CO2 Concentration (ppm)')
+
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+
+    if file_type and file_path:
+        plt.savefig(file_path, format=file_type)
+        messagebox.showinfo("Export Successful", f"Plot saved as {file_path}")
+    else:
+        plt.show()
+
+def select_file():
+    file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
+    return file_path
+
+def save_plot():
+    file_types = [("PNG files", "*.png"), ("JPG files", "*.jpg"), ("PDF files", "*.pdf")]
+    file_path = filedialog.asksaveasfilename(filetypes=file_types, defaultextension=file_types)
+    return file_path
+
+def plot_choice():
+    file_path = select_file()
+    if not file_path:
+        return
+
+    data = load_data(file_path)
+
+    def plot_and_save():
+        period = period_var.get()
+        save_path = save_plot()
+        if save_path:
+            file_type = save_path.split('.')[-1]
+            plot_data(data, period, file_type, save_path)
+
+    root.destroy()
+    plot_and_save()
+
+root = Tk()
+root.title("CO2 Data Plotter")
+
+Label(root, text="Choose the plot type:").pack()
+
+period_var = IntVar()
+period_var.set(1)
+
+Radiobutton(root, text="Daily", variable=period_var, value=1).pack(anchor='w')
+Radiobutton(root, text="Monthly", variable=period_var, value=2).pack(anchor='w')
+Radiobutton(root, text="Annual", variable=period_var, value=3).pack(anchor='w')
+
+Button(root, text="Select Data File and Plot", command=plot_choice).pack()
+
+root.mainloop()
